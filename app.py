@@ -1,9 +1,9 @@
 import tkinter as tk
-import subprocess
+import subprocess as sub
 import os
 import tkmacosx as tkm
 from tkinter import *
-from tkinter import filedialog
+
 
 root = tk.Tk()
 root.title("Search and Replace")
@@ -11,20 +11,25 @@ root.title("Search and Replace")
 #set read write permissions for search-replace.sh
 os.system("chmod 755 search-replace.sh")
 
-#wrapper frame for all elements
+#container frame for all elements
 container = Frame(root)
 container.pack()
+
 wrapper = Frame(container)
 wrapper.pack(side=LEFT)
-wrapper2 = Frame(container, background="gray")
-wrapper2.pack(expand=True, fill=BOTH)
-canvas = Canvas(wrapper2, width=800, background="gray", bd=0, scrollregion=(0,0,500,500))
-scrollbar = Scrollbar(wrapper2, orient='vertical')
-scrollbar.pack(side=RIGHT,fill=Y)
-scrollbar.config(command=canvas.yview)
-canvas.config(yscrollcommand=scrollbar.set)
-canvas.pack(side=LEFT,expand=True,fill=BOTH)
 
+wrapper2 = Frame(container)
+
+text_box = Text(wrapper2, height=10, width=60, font=12, background="gray")
+text_box.pack(side=LEFT, expand=True)
+
+sb_ver = Scrollbar(wrapper2,orient=VERTICAL)
+sb_ver.pack(side=RIGHT, fill=Y)
+
+text_box.config(yscrollcommand=sb_ver.set)
+sb_ver.config(command=text_box.yview)
+
+wrapper2.pack(side=LEFT)
 
 #frame for first line of elements
 line1 = Frame(wrapper)
@@ -129,26 +134,27 @@ def clear_pressed():
     site_name_field.delete(0, END)
     search_string_field.delete(0, END)
     replace_string_field.delete(0, END)
+    text_box.delete("1.0", "end")
 
 def run_pressed():
     global return_code
     global result_btn_state
+    global results
     dry_checker()
     env_check()
-    subprocess.call(['sh', './search-replace.sh', dry_script_var, str(site_name_field.get()), env_script_var, str(search_string_field.get()), str(replace_string_field.get())])
+
+    sub.call(['sh', './search-replace.sh', dry_script_var, str(site_name_field.get()), env_script_var, str(search_string_field.get()), str(replace_string_field.get())])
     results = tkm.Button(wrapper, text="Results", command=view_results, padx=10, pady=5)
     results.pack()
 
+
 def view_results():
-    global terminal_output_txt  
     print("view results pressed")
     with open("terminal-output.txt") as f:
         for line in f:
-            terminal_output_txt = line.strip()
-            print(line.strip())
-            output_label = Label(canvas, text=terminal_output_txt)
-            output_label.pack(anchor="w")
-
+            print(line)
+            text_box.insert(END, line)
+    results.pack_forget()
   
 #control buttons
 run = tkm.Button(wrapper, text="Run", command=run_pressed, padx=10, pady=5)
